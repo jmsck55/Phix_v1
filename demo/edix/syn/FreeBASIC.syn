@@ -1,0 +1,169 @@
+FreeBASIC syntax file
+BlockComment /' '/
+LineComment '
+'
+' compile with: 'fbc -b xxx.fb' or 'fbc xx.bas'
+' eg C:\Go\FreeBASIC-1.05.0-win32\fbc.exe -b "C:\Go\FreeBASIC-1.05.0-win32\test.fb"
+' (resulting test.exe must then be run separately)
+' eg C:\Go\FreeBASIC-1.05.0-win32\test
+'
+TokenStart abcedfghijklmnopqrstuvwxyz
+TokenStart ABCDEFGHIJKLMNOPQRSTUVWXYZ_#
+TokenChar 0123456789
+Escapes \rnt\'"eE#x0buU
+Delimiters $:.%\^
+Operators \ , = := == != < <= > >= @ + - * / += -= *= /= .. & &= ? ; : | ~ .
+Braces 7 ()[]{}
+FileExtensions bas fb bi
+Indents + then do else - end
+
+ReservedWords
+'------------
+        and
+        andalso
+        as As
+        byref Byref
+        byval
+        cls
+        const Const
+        continue Continue
+        data
+        declare
+        dim Dim
+        do
+        else
+        end End
+        exit Exit
+        for For
+        function Function
+        if If
+        inkey Inkey
+        loop
+        mod
+        next Next
+        not Not
+        or Or
+        orelse OrElse
+        preserve Preserve
+        Randomize 
+        read
+        redim ReDim
+        return Return
+        rset RSet
+        shared Shared
+        shl
+        shr
+        step Step
+        sub Sub
+        swap
+        then Then
+        this
+        to To
+        type
+        until
+        using Using
+        wend Wend
+        while While
+        width
+        with
+
+        Once
+        #Define
+        #EndIf
+        #EndMacro
+        #endmacro
+        #Include
+        #Ifndef
+        #Macro
+        #macro
+
+Types
+'----
+        byte Byte
+        double
+        integer Integer
+        long Long
+        longint LongInt
+        string String
+        ptr Ptr
+        uinteger UInteger
+        ulong ULong
+        ulongint ULongInt
+        Mpz_ptr
+        __mpz_struct
+        __gmp_randstate_struct
+        ZString
+
+BuiltinRoutines
+'--------------
+        abs
+        allocate Allocate
+        cdbl
+        clngint
+        culngint CULngInt
+        deallocate DeAllocate
+        iif
+        inkey InKey
+        int Int
+        len Len
+        log Log
+        print Print
+        rnd Rnd
+        sleep Sleep
+        space Space
+        str Str
+
+BuiltinConstants
+'---------------
+        ErM
+        Timer
+        TRUE True
+        FALSE
+
+LibraryRoutines
+'--------------
+        gmp_randclear
+        gmp_randinit_mt
+        gmp_randseed
+        mpz_add_ui
+        mpz_clear
+        mpz_cmp
+        mpz_cmp_ui
+        mpz_fdiv_q_2exp
+        mpz_get_str Mpz_get_str
+        mpz_init Mpz_init
+        mpz_mul_2exp
+        mpz_powm
+        mpz_powm_ui
+        mpz_set
+        mpz_set_ui
+        mpz_set_str Mpz_set_str
+        mpz_sub_ui
+        mpz_tstbit
+        mpz_urandomm
+        Sqr
+
+'
+' The Scheme section defines the /default/ colours (and exists mainly to 
+'		simplify distribution and installation).
+' If a .clr file exists (eg Euphoria.clr) then it overrides these defaults.
+' The Options/Colours window creates/overwrites .clr files on exit.
+'
+Scheme
+        Background Silver
+        Comments Navy Italic
+        Highlight Gray
+        Strings Green
+        Symbols Blue
+        Illegals Black
+        Other Black
+        Brace1 Blue
+        Brace2 Yellow
+        Brace3 Maroon
+        Brace4 Purple
+        Brace5 Green
+        ReservedWords Teal
+        Types Teal
+        BuiltinRoutines #7060A8
+        LibraryRoutines #7060A8
+
