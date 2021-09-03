@@ -1,0 +1,35 @@
+--
+-- demo/rosetta/User_Input_Graphical.exw
+--
+include pGUI.e
+
+Ihandle dlg, label1, input1, label2, input2, OK, Cancel
+
+function ok_cb(Ihandle self)
+    if self=OK then
+        string in1 = IupGetAttribute(input1,"VALUE")
+        integer in2 = IupGetInt(input2,"VALUE")
+        string msg = sprintf(`"%s" and %d`,{in1,in2})
+        IupMessage("You entered",msg)
+        -- (return IUP_CONTINUE if unhappy with input)
+    end if
+    return IUP_CLOSE
+end function
+
+IupOpen()
+label1 = IupLabel("Please enter a string")
+input1 = IupText(`VALUE="a string", EXPAND=HORIZONTAL`)
+label2 = IupLabel("and the number 75000")
+input2 = IupText("VALUE=75000, EXPAND=HORIZONTAL, MASK="&IUP_MASK_INT)
+OK     = IupButton("OK", "ACTION", Icallback("ok_cb"))
+Cancel = IupButton("Cancel", "ACTION", Icallback("ok_cb"))
+sequence buttons = {IupFill(),OK,Cancel,IupFill()}
+Ihandle strbox = IupHbox({label1,input1},"ALIGNMENT=ACENTER, PADDING=5"),
+        numbox = IupHbox({label2,input2},"ALIGNMENT=ACENTER, PADDING=5"),
+        btnbox = IupHbox(buttons,"PADDING=40, NORMALIZESIZE=BOTH"),
+        vbox = IupVbox({strbox, numbox, btnbox}, "GAP=5,MARGIN=5x5")
+dlg = IupDialog(vbox, `TITLE="User Input/Graphical"`)
+IupShow(dlg)
+IupMainLoop()
+IupClose()
+
