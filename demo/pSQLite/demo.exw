@@ -1,0 +1,60 @@
+--
+-- demo\pSQLite\demo.exw
+-- =====================
+--
+-- originally from https://www.codeproject.com/Articles/5261771/Golang-SQLite-Simple-Example
+--
+include pSQLite.e
+
+sqlite3 db
+
+procedure db_exec(string cmd, sequence args={})
+    if length(args) then cmd = sprintf(cmd,args) end if
+    integer res = sqlite3_exec(db,cmd)
+    if res!=SQLITE_OK then ?9/0 end if
+end procedure
+
+constant createStudentTableSQL = """
+CREATE TABLE student (idStudent integer NOT NULL PRIMARY KEY AUTOINCREMENT,     
+                      code TEXT,
+                      name TEXT,
+                      program TEXT);""",
+        students = {{"0001", "Liana Kim", "Bachelor"},
+                    {"0002", "Glen Rangel", "Bachelor"},
+                    {"0003", "Martin Martins", "Master"},
+                    {"0004", "Alayna Armitage", "PHD"},
+                    {"0005", "Marni Benson", "Bachelor"},
+                    {"0006", "Derrick Griffiths", "Master"},
+                    {"0007", "Leigh Daly", "Bachelor"},
+                    {"0008", "Marni Benson", "PHD"},
+                    {"0009", "Klay Correa", "Bachelor"}}
+
+procedure main()
+    {} = delete_file("sqlite-database.db")
+    printf(1,"Creating sqlite-database.db...\n")
+    db = sqlite3_open("sqlite-database.db")
+--  defer sqlite3_close(db) -- Defer Closing the database [SUG]
+    printf(1,"Create student table...\n")
+    db_exec(createStudentTableSQL)
+    printf(1,"student table created\n")
+
+    printf(1,"Inserting student records ...\n")
+    db_exec("BEGIN TRANSACTION;") -- (or just "BEGIN;")
+    for i=1 to length(students) do
+        db_exec(`INSERT INTO student(code, name, program) VALUES ("%s", "%s", "%s");`,students[i])
+    end for
+    db_exec("END TRANSACTION;")  -- (same as "COMMIT;")
+
+    object data = sqlite3_get_table(db, "SELECT code, name, program FROM student ORDER BY name")
+--  object data = sqlite3_get_table(db, "SELECT code, name, program FROM student ORDER BY program")
+--  object data = sqlite3_get_table(db, "SELECT code, name, program FROM student ORDER BY code")
+    for i=1 to length(data) do
+        printf(1,"Student: %s %-17s %s\n", data[i])
+    end for
+    sqlite3_close(db)
+    {} = delete_file("sqlite-database.db")
+end procedure
+main()
+?"done"
+{} = wait_key()
+

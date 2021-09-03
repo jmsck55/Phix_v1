@@ -1,0 +1,239 @@
+include pSQLite.e
+
+?sqlite3_libversion()
+
+sqlite3 db = sqlite3_open("test.sqlite")
+integer res
+
+procedure db_exec(string cmd, bool fatal=true)
+    res = sqlite3_exec(db,cmd)
+    if fatal and res!=SQLITE_OK then ?9/0 end if
+end procedure
+
+-- nb "IF NOT EXISTS" is only supported in 3.3.0 and later (2006-01-11)
+--db_exec("CREATE TABLE IF NOT EXISTS test(id INTEGER, desc TEXT);")
+--db_exec("DELETE FROM test;")
+db_exec("DROP TABLE test;",fatal:=false)
+db_exec("CREATE TABLE test(id INTEGER, desc TEXT);")
+
+constant descs = {"one","two","three"}
+
+sqlite3_stmt pStmt = sqlite3_prepare(db,"INSERT INTO test VALUES(:id, :desc);")
+constant k_id   = sqlite3_bind_parameter_index(pStmt, ":id"),
+         k_desc = sqlite3_bind_parameter_index(pStmt, ":desc")
+db_exec("BEGIN TRANSACTION;")
+for i=1 to 3 do
+    sqlite3_bind_int(pStmt, k_id, i)
+    sqlite3_bind_text(pStmt,k_desc, descs[i])
+    res = sqlite3_step(pStmt)
+    if res!=SQLITE_DONE then ?9/0 end if
+    sqlite3_reset(pStmt)
+end for
+if sqlite3_finalize(pStmt)!=SQLITE_OK then ?9/0 end if
+db_exec("END TRANSACTION;")
+
+pStmt = sqlite3_prepare(db,"SELECT id,desc FROM test;")
+while 1 do
+    res = sqlite3_step(pStmt)
+    if res=SQLITE_DONE then exit end if
+    if res!=SQLITE_ROW then ?9/0 end if
+    ?"row:"
+    for c=1 to sqlite3_column_count(pStmt) do
+        integer ctype = sqlite3_column_type(pStmt,c)
+        string name = sqlite3_column_name(pStmt,c)
+        if ctype=SQLITE_INTEGER then
+            ?{"SQLITE_INTEGER",name,sqlite3_column_int(pStmt,c)}
+        elsif ctype=SQLITE_TEXT then
+            ?{"SQLITE_TEXT",name,sqlite3_column_text(pStmt,c)}
+        else
+            ?9/0
+        end if
+    end for
+end while
+if sqlite3_finalize(pStmt)!=SQLITE_OK then ?9/0 end if
+sqlite3_close(db)
+
+?"done"
+{} = wait_key()
+abort(0)
+
+-- output:
+--  "3.23.1"
+--  "row:"
+--  {"SQLITE_INTEGER","id",1}
+--  {"SQLITE_TEXT","desc","one"}
+--  "row:"
+--  {"SQLITE_INTEGER","id",2}
+--  {"SQLITE_TEXT","desc","two"}
+--  "row:"
+--  {"SQLITE_INTEGER","id",3}
+--  {"SQLITE_TEXT","desc","three"}
+
+
+include pSQLite.e
+sqlite3 db = sqlite3_open("test.sqlite")
+
+procedure db_exec(string cmd, bool fatal=true)
+    integer res = sqlite3_exec(db,cmd)
+    if fatal and res!=SQLITE_OK then ?9/0 end if
+end procedure
+
+function process_one_row(sequence data, cols, atom user_data)
+    ?{"process_row",data,cols,user_data}
+    return 0    -- (any other value raises SQLITE_ABORT)
+end function
+constant r_row = routine_id("process_one_row")
+
+db_exec("BEGIN TRANSACTION;")
+db_exec("DROP TABLE test;",fatal:=false)
+db_exec("CREATE TABLE test(id INTEGER, desc TEXT);")
+db_exec("INSERT INTO test VALUES(1, 'one');")
+db_exec("INSERT INTO test VALUES(2, 'two');")
+integer res = sqlite3_exec(db,"SELECT * FROM test;",r_row,55)
+if res!=SQLITE_OK then
+    if res!=SQLITE_ABORT then ?9/0 end if
+    ?"SQLITE_ABORT"
+end if
+db_exec("DROP TABLE test;")
+db_exec("END TRANSACTION;")
+sqlite3_close(db)
+
+-- output:
+--  {"process_row",{"1","one"},{"id","desc"},55}
+--  {"process_row",{"2","two"},{"id","desc"},55}
+
+--{{"cid", "name", "type", "notnull", "dflt_value", "pk"},
+-- {"0", "id", "INTEGER", "0", {}, "0"},
+-- {"1", "desc", "TEXT", "0", {}, "0"}}
+--{"process_row",{"1","one"},{"id","desc"},55}
+--{"process_row",{"2","two"},{"id","desc"},55}
+--"done"
+
+--/* good, 100,000/s (!!!)
+constant LIM = 100000
+include pSQLite.e
+
+?sqlite3_libversion()   -- shows eg "3.2.1"
+
+sqlite3 db = sqlite3_open("test.sqlite")
+
+procedure db_exec(string cmd, bool fatal=true)
+    integer res = sqlite3_exec(db,cmd)
+    if fatal and res!=SQLITE_OK then ?9/0 end if
+end procedure
+
+db_exec("DROP TABLE test;",fatal:=false)
+db_exec("CREATE TABLE test (code INTEGER PRIMARY KEY, data);")
+
+atom t0 = time()
+db_exec("BEGIN TRANSACTION;") -- (or just "BEGIN;")
+for i=1 to LIM do
+    db_exec(sprintf("INSERT INTO test VALUES (%d,%d);",{i,i}))
+end for
+--db_exec("DROP TABLE test;")
+db_exec("END TRANSACTION;")  -- (same as "COMMIT;")
+t0 = time()-t0
+
+sqlite3_close(db)
+printf(1,"%,d records added in %3.2fs, %3.2f/s\n",{LIM,t0,LIM/t0})
+
+puts(1,"\ndone\n")
+--*/
+
+--/*
+"3.23.1"
+100,000 records added in 0.98s, 101522.84/s
+"3.2.1"
+100,000 records added in 1.24s, 80971.66/s
+
+include pSQLite.e
+--?iff(sqlite3_open_dll("sqlite3.dll")?"true":"false")
+?sqlite3_libversion()
+?"started"
+constant LIM=100000
+string cmd
+integer res
+-- 3.2.1 barfs on 3.2.8+ dbs without rowid...
+--{} = delete_file("test.sqlite")
+sqlite3 sql_db = sqlite3_open("test.sqlite") 
+
+procedure die()
+--  if msg="" then msg = sqlite3_errmsg(sql_db) end if
+    string msg = sqlite_last_exec_err
+    printf(1, "Command:%s\nError %d : %s\n", {cmd,res,msg})
+    sqlite3_close(sql_db)
+    {} = wait_key()
+    abort(1)
+end procedure
+
+cmd = "DROP TABLE test;"
+res = sqlite3_exec(sql_db, cmd)
+--?"creating..."
+-- syntax error on 3.2.1:
+--cmd = "CREATE TABLE IF NOT EXISTS test (code INTEGER PRIMARY KEY, data) WITHOUT ROWID;"
+-- ditto
+--cmd = "CREATE TABLE test (code INTEGER PRIMARY KEY, data) WITHOUT ROWID;"
+cmd = "CREATE TABLE test (code INTEGER PRIMARY KEY, data);"
+res = sqlite3_exec(sql_db, cmd)
+if res!=SQLITE_OK then die() end if
+--?"...created"
+--cmd = "DELETE FROM test;"
+--res = sqlite3_exec(sql_db, cmd)
+--if res!=SQLITE_OK then die() end if
+cmd = "BEGIN TRANSACTION;"
+res = sqlite3_exec(sql_db, cmd)
+if res!=SQLITE_OK then die() end if
+atom t0 = time()
+for i=1 to LIM do
+    cmd = sprintf("INSERT INTO test VALUES (%d,%d);",{i,i})
+    res = sqlite3_exec(sql_db, cmd)
+    if res!=SQLITE_OK then die() end if
+end for
+t0 = time()-t0
+cmd = "END TRANSACTION;"
+res = sqlite3_exec(sql_db, cmd)
+if res!=SQLITE_OK then die() end if
+sqlite3_close(sql_db)
+
+printf(1,"%3.2fs, %3.2f/s\n",{t0,LIM/t0})
+--"3.23.1"
+--10.20s, 98010.39/s
+--10.11s, 98921.75/s
+--9.31s, 107376.79/s
+--8.95s, 111694.40/s
+--"3.2.1"
+--12.76s, 78339.21/s
+--*/
+
+--~5000/s
+--/*
+?"started"
+constant LIM=100
+include database.e
+integer res = db_open("test.edb",DB_LOCK_NO)
+if res=DB_OPEN_FAIL then
+    res = db_create("test.edb",DB_LOCK_NO)
+    if res!=DB_OK then ?9/0 end if
+end if  
+res = db_create_table("test")
+if res!=DB_OK then
+    db_delete_table("test")
+    res = db_create_table("test")
+    if res!=DB_OK then ?9/0 end if
+end if
+atom t0 = time()
+for i=1 to LIM do
+--  res = db_insert(i,sprintf("%d",i))
+    res = db_insert(i,i)
+    if res!=DB_OK then ?9/0 end if
+end for
+t0 = time()-t0
+db_delete_table("test")
+db_close()
+printf(1,"%3.2fs, %3.2f/s\n",{t0,LIM/t0})
+--*/
+
+?"done"
+{} = wait_key()
+abort(0)
+
