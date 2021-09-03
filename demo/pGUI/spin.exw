@@ -1,0 +1,31 @@
+--
+-- demo/pGUI/spin.exw
+--
+-- translation of http://webserver2.tecgraf.puc-rio.br/iup/examples/tests/spin.c
+--
+-- As noted in the comments below, the up/down buttons don't actually DO anything,
+-- apart from the display - in a real program you would have to actually implement
+-- whatever it is you want the up/down to do yourself, in the SPIN_CB callback.
+-- (An IupText with the SPIN attribute set may be what you're really looking for,
+--  at the bottom of demo/pGUI/boids3d.exw you'll find several examples of that.)
+--
+
+puts(1,"") -- gui atop console, pls (otherwise spin_cb's printf hides the gui)
+
+include pGUI.e
+
+function spin_cb(Ihandle /*ih*/, integer inc)
+  /* does nothing, just print the call */
+  printf(1,"SPIN_CB(%d)\n", inc)
+  return IUP_DEFAULT
+end function
+
+IupOpen()
+Ihandle text = IupText("RASTERSIZE=195x26, EXPAND=HORIZONTAL"),
+        spinbox = IupSpinbox(text,"SPIN_CB",Icallback("spin_cb")),
+        vbox = IupVbox({spinbox}),
+        dlg = IupDialog(vbox,`MARGIN=10x10, TITLE="IupSpin Test"`)
+IupShow(dlg)
+IupMainLoop()
+IupClose()
+
