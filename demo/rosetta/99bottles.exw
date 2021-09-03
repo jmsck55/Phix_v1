@@ -1,0 +1,120 @@
+--
+-- demo\rosetta\99bottles.exw
+-- ==========================
+--
+-- In this puzzle, write code to print out the entire "99 bottles of beer on the wall" song. 
+-- For those who do not know the song, the lyrics follow this form: 
+-- X bottles of beer on the wall
+-- X bottles of beer
+-- Take one down, pass it around
+-- X-1 bottles of beer on the wall
+-- 
+-- X-1 bottles of beer on the wall
+-- ...
+-- Take one down, pass it around
+-- 0 bottles of beer on the wall
+-- 
+-- Where X and X-1 are replaced by numbers of course. Grammatical support for "1 bottle of beer" is optional. 
+-- As with any puzzle, try to do it in as creative/concise/comical a way as possible (simple, obvious solutions allowed, too). 
+
+
+constant ninetynine = 99 -- (set this to 9 for testing)
+
+function bottles(integer count)
+    if count=0 then     return "no more bottles"
+    elsif count=1 then  return "1 bottle" end if
+    if count=-1 then count = ninetynine end if
+    return sprintf("%d bottles",count)
+end function
+
+function bob(integer count)
+    return bottles(count)&" of beer"
+end function
+
+function up1(string bob)
+-- Capitalise sentence start (needed just the once, "no more"=>"No more")
+    bob[1] = upper(bob[1])
+    return bob
+end function
+
+procedure ninetyninebottles()
+string this = bob(ninetynine)
+string that = "Take one down, pass it around,\n"
+    for i=ninetynine to 0 by -1 do
+        puts(1,up1(this)&" on the wall,\n")
+        puts(1,this&".\n")
+        if i=0 then that = "Go to the store, buy some more,\n"
+        elsif i=1 then that[6..8] = "it" end if
+        this = bob(i-1)
+        puts(1,that&this&" on the wall.\n\n")
+    end for
+end procedure
+
+if 01 then
+    ninetyninebottles()
+end if
+
+--{{trans|Go}}
+
+constant smalls = {"one", "two", "three", "four", "five", "six", "seven", 
+    "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", 
+    "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"},
+         tens = {"ones", "ten", "twenty", "thirty", "forty",
+            "fifty", "sixty", "seventy", "eighty", "ninety"}
+
+function numberName(integer n)
+    if n<20 then return iff(n=0?"no":smalls[n]) end if
+    string t = tens[floor(n/10)+1]
+    n = mod(n,10)
+    if n>0 then t &= " " & smalls[n] end if
+    return t
+end function
+
+function pluralizeFirst(string s, integer n)
+-- pluralize first word of s by adding an s, but only if n is not 1.
+    if n!=1 then
+        n = find(' ',s)
+        s[n..n-1] = "s"
+    end if
+    return s
+end function
+
+-- p is string to slur, d is drunkenness, from 0 to 99
+function slur(string p, integer d)
+    -- shuffle only interior letters
+    -- adapted from Knuth shuffle task.
+    -- shuffle letters with probability d/100.
+    for i=length(p)-1 to 3 by -1 do
+        if rand(99)>d then
+            integer j = rand(i)+1
+            {p[i], p[j]} = {p[j], p[i]}
+        end if
+    end for
+    return substitute(p,"  "," ")
+end function
+
+procedure main()
+    for i=99 to 1 by -1 do
+        printf(1,"%s %s %s\n",
+                 {slur(numberName(i), i),
+                  pluralizeFirst(slur("bottle of", i), i),
+                  slur("beer on the wall", i)})
+        printf(1,"%s %s %s\n",
+                 {slur(numberName(i), i),
+                  pluralizeFirst(slur("bottle of", i), i),
+                  slur("beer", i)})
+        printf(1,"%s %s %s\n",
+                 {slur("take one", i),
+                  slur("down", i),
+                  slur("pass it around", i)})
+        printf(1,"%s %s %s\n",
+                 {slur(numberName(i-1), i),
+                  pluralizeFirst(slur("bottle of", i), i-1),
+                  slur("beer on the wall", i)})
+    end for
+end procedure
+ 
+if 0 then
+    main()
+end if
+{} = wait_key()

@@ -1,0 +1,17 @@
+--
+-- demo\rosetta\Bresenham_line.exw
+-- ===============================
+--
+--  Author Pete Lomax, October 2015
+--
+--  Results may be verified with demo\rosetta\viewppm.exw
+--
+include ppm.e   -- black, blue, green, red, white, new_image(), write_ppm(), bresLine()
+
+sequence screenData = new_image(400,300,black)
+screenData = bresLine(screenData,100,  1, 50,300,red)
+screenData = bresLine(screenData,  1,180,400,240,green)
+screenData = bresLine(screenData,200,  1,400,150,white)
+screenData = bresLine(screenData,195,  1,205,300,blue)
+write_ppm("bresenham.ppm",screenData)
+

@@ -1,0 +1,88 @@
+--
+-- demo\rosetta\Colour_pinstripe.exw
+-- =================================
+--
+
+--#withtype Ihandle
+--#withtype cdCanvas
+
+include pGUI.e
+
+constant colours = {CD_BLACK, CD_RED, CD_GREEN, CD_MAGENTA, CD_CYAN, CD_YELLOW, CD_WHITE}
+--constant colours = {CD_BLACK, CD_WHITE}
+
+procedure draw_to(cdCanvas cdcanvas)
+    cdCanvasActivate(cdcanvas)
+    integer {width, height} = cdCanvasGetSize(cdcanvas) 
+    for y=1 to 4 do
+        integer x = 0, c = 1, h = floor(height/(5-y))
+        while x<width do
+            cdCanvasSetForeground(cdcanvas, colours[c])
+            cdCanvasBox(cdcanvas, x, x+y, height-h, height)
+            x += y
+            c = iff(c=length(colours)?1:c+1)
+        end while
+        height -= h
+    end for
+    cdCanvasFlush(cdcanvas)
+end procedure
+
+Ihandle dlg, canvas
+cdCanvas cddbuffer, cdcanvas
+
+function redraw_cb(Ihandle /*ih*/, integer /*posx*/, /*posy*/)
+    draw_to(cddbuffer)
+    return IUP_DEFAULT
+end function
+
+function map_cb(Ihandle ih)
+    cdcanvas = cdCreateCanvas(CD_IUP, ih)
+    cddbuffer = cdCreateCanvas(CD_DBUFFER, cdcanvas)
+    return IUP_DEFAULT
+end function
+
+function unmap_cb(Ihandle /*ih*/)
+    cdKillCanvas(cddbuffer)
+    cdKillCanvas(cdcanvas)
+    return IUP_DEFAULT
+end function
+
+function print_cb(Ihandle /*ih*/)
+    cdCanvan print_canvas = cdCreateCanvas(CD_PRINTER, "pinstripe -d") 
+    if print_canvas!=NULL then 
+        draw_to(print_canvas)
+        cdKillCanvas(print_canvas) 
+    end if 
+    return IUP_DEFAULT
+end function
+
+function exit_cb(Ihandle /*ih*/)
+    return IUP_CLOSE
+end function
+
+procedure main()
+    IupOpen()
+
+    Ihandle file_menu = IupMenu({IupMenuItem("&Print",Icallback("print_cb")),
+                                 IupMenuItem("E&xit", Icallback("exit_cb"))})
+
+    Ihandle main_menu = IupMenu({IupSubmenu("File", file_menu)})
+
+    canvas = IupCanvas(NULL)
+    IupSetAttribute(canvas, "RASTERSIZE", "600x400") -- initial size
+
+    IupSetCallback(canvas, "MAP_CB",    Icallback("map_cb"))
+    IupSetCallback(canvas, "UNMAP_CB",  Icallback("unmap_cb"))
+
+    dlg = IupDialog(canvas)
+    IupSetAttribute(dlg, "TITLE", "Colour pinstripe")
+    IupSetAttributeHandle(dlg,"MENU",main_menu)
+    IupSetCallback(canvas, "ACTION", Icallback("redraw_cb"))
+    IupShowXY(dlg,IUP_CENTER,IUP_CENTER)
+    IupSetAttribute(canvas, "RASTERSIZE", NULL) -- release the minimum limitation
+    IupMainLoop()
+    IupClose()
+end procedure
+
+main()
+

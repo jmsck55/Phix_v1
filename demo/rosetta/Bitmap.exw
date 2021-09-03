@@ -1,0 +1,48 @@
+--
+--
+-- demo\rosetta\Bitmap.exw
+-- =======================
+--
+--  Author Pete Lomax, October 2015
+--
+--  Copy of [[Bitmap#Euphoria|Euphoria]]
+--
+include ppm.e -- black, white, new_image()
+
+-- Usage example:
+sequence image = new_image(800,600)
+ 
+-- Set pixel color:
+image[400][300] = white
+
+-- Get pixel color
+integer colour = image[400][300] -- Now colour is #FF0000
+
+
+--/* decided against these:
+function set_pixel(sequence image, integer x, integer y, integer colour)
+    image[x][y] = colour
+    return image
+end function
+
+function get_pixel(sequence image, integer x, integer y)
+    return image[x][y]
+end function
+
+procedure main()
+-- Usage example:
+    sequence image = new_image(800,600)
+ 
+    -- Set pixel color:
+    image[400][300] = red
+    --or:
+    image = set_pixel(image,400,300,red) 
+
+    -- Get pixel color
+    integer colour = image[400][300] -- Now colour is #FF0000
+    -- or:
+    colour = get_pixel(image,400,300)
+end procedure
+
+main()
+--*/
