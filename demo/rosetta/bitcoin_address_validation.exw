@@ -1,0 +1,148 @@
+--
+-- demo\rosetta\bitcoin_address_validation.exw
+-- ===========================================
+--
+with javascript_semantics
+include builtins\sha256.e
+
+constant b58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+string charmap = ""
+
+function valid(string s, bool expected)
+    bool res := (expected==false)
+    if charmap="" then
+        charmap = repeat('\0',256)
+        for i=1 to length(b58) do
+            charmap[b58[i]] = i
+        end for
+    end if
+-- not at all sure about this:
+--  if length(s)!=34 then
+--      return {expected==false,"bad length"}
+--  end if
+    if not find(s[1],"13") then
+        return {res,"first character is not 1 or 3"}
+    end if
+    string out = repeat('\0',25)
+    for i=1 to length(s) do
+        integer c = charmap[s[i]]
+        if c=0 then 
+            return {res,"bad char"}
+        end if
+        c -= 1
+        for j=25 to 1 by -1 do
+            c += 58 * out[j];
+            out[j] = and_bits(c,#FF)
+            c = floor(c/#100)
+        end for
+        if c!=0 then
+            return {res,"address too long"}
+        end if
+    end for
+    if out[1]!='\0' then
+        return {res,"not version 0"}
+    end if
+    if out[22..$]!=sha256(sha256(out[1..21]))[1..4] then
+        return {res,"bad digest"}
+    end if
+    res := (expected==true)
+    return {res,"OK"}
+end function
+ 
+constant tests = {{"1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9",true},  -- OK
+                  {"1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nJ9",false}, -- bad digest
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i",true},  -- OK
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62j",false}, -- bad disgest
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X",false}, -- bad digest (checksum changed, original data.)
+                  {"1ANNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i",false}, -- bad digest (data changed, original checksum.)
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62iz",false}, -- not version 0
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62izz",false}, -- address too long
+                  {"1BGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i",false}, -- bad digest
+                  {"1A Na15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i",false}, -- bad char
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62I",false}, -- bad char
+                  {"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62!",false}, -- bad char
+                  {"1AGNa15ZQXAZUgFiqJ3i7Z2DPU2J6hW62i",false}, -- bad digest
+                  {"1111111111111111111114oLvT2",       true},  -- OK
+                  {"17NdbrSGoUotzeGCcMMCqnFkEvLymoou9j",true},  -- OK
+                  {"1badbadbadbadbadbadbadbadbadbadbad",false}, -- not version 0
+                  {"BZbvjr",false}, -- first character is not 1 or 3 (checksum is fine, address too short)
+                  {"i55j",false}, -- first character is not 1 or 3 (checksum is fine, address too short)
+                  {"16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM", true},  -- OK (from public_point_to_address)
+                 $}
+
+for i=1 to length(tests) do
+    {string ti, bool expected} = tests[i]
+    {bool res, string coin_err} = valid(ti,expected)
+    if not res then
+        printf(1,"%s: %s\n", {ti, coin_err})
+        {} = wait_key()
+    end if          
+end for
+
+?"done"
+{} = wait_key()
+
+--/*
+checked:
+Ada:
+              "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- VALID
+            , "1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9"  -- VALID
+            , "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X"  -- checksum changed, original data.
+            , "1ANNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- data changed, original checksum.
+            , "1A Na15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"  -- invalid chars
+C
+1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9: Ok
+1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i: Ok
+1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nJ9: bad digest
+1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62I: bad char
+C#
+ValidateBitcoinAddress("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i")); // VALID
+ValidateBitcoinAddress("1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9")); // VALID
+ValidateBitcoinAddress("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X")); // checksum changed, original data
+ValidateBitcoinAddress("1ANNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i")); // data changed, original checksum
+ValidateBitcoinAddress("1A Na15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i")); // invalid chars
+ValidateBitcoinAddress("BZbvjr")); // checksum is fine, address too short
+D:
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i": OK.
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62j": checksums don't match.
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62!": found a bad char in the Bitcoin address.
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62iz": not Bitcoin version 0.
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62izz": too long Bitcoin address.
+Erlang:
+validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i")
+validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW622")
+Factor:
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i" btc-valid? . ! t, VALID
+"1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9" btc-valid? . ! t, VALID
+"1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62X" btc-valid? . ! f, checksum changed, original data.
+"1ANNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i" btc-valid? . ! f, data changed, original checksum. 
+FreeBASIC:
+Data "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i" ' original
+Data "1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62j" ' checksum changed
+Data "1NAGa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i" ' address changed
+Data "0AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i" ' only 1 or 3 as first char. allowed
+Data "1AGNa15ZQXAZUgFlqJ2i7Z2DPU2J6hW62i" ' illegal character in address
+Go:
+> valid 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i
+> valid 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62j
+> valid 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62! ; echo $status
+> valid 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62iz ; echo $status
+not version 0
+1
+> valid 1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62izz ; echo $status
+too long
+
+This was useful during debugging:
+
+--function ashex(string s)
+--string res = ""
+--  for i=1 to length(s) do
+--      res &= sprintf("%02x",s[i])
+--      if remainder(i,4)=0 then
+--          res &= ' '
+--      end if
+--  end for
+--  return res
+--end function
+
+--*/

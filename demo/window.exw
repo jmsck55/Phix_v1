@@ -1,0 +1,251 @@
+--
+-- demo\window.exw
+-- ===============
+--
+-- A Standard Windows Window coded at the primitive API level
+-- Most Phix programmers should simply use Arwen or similar (was:Win32Lib, wxWidgets, EuGTK or EuIUP!)
+--
+include builtins\cffi.e
+constant tWNDCLASSEX = """
+typedef struct tagWNDCLASSEX {
+  UINT      cbSize;
+  UINT      style;
+  WNDPROC   lpfnWndProc;
+  int       cbClsExtra;
+  int       cbWndExtra;
+  HINSTANCE hInstance;
+  HICON     hIcon;
+  HCURSOR   hCursor;
+  HBRUSH    hbrBackground;
+  LPCTSTR   lpszMenuName;
+  LPCTSTR   lpszClassName;
+  HICON     hIconSm;
+} WNDCLASSEX, *PWNDCLASSEX;
+"""
+constant idWNDCLASSEX = define_struct(tWNDCLASSEX)
+
+constant tPOINT = """
+typedef struct tagPOINT {
+  LONG x;
+  LONG y;
+} POINT, *PPOINT;
+"""
+--constant idPOINT = define_struct(tPOINT)
+{} = define_struct(tPOINT)
+
+constant tMESSAGE = """
+typedef struct tagMSG {
+  HWND   hwnd;
+  UINT   message;
+  WPARAM wParam;
+  LPARAM lParam;
+  DWORD  time;
+  POINT  pt;
+} MSG, *PMSG, *LPMSG;
+"""
+constant idMESSAGE = define_struct(tMESSAGE)
+
+constant tRECT = """
+typedef struct _RECT {
+  LONG left;
+  LONG top;
+  LONG right;
+  LONG bottom;
+} RECT, *PRECT;
+"""
+constant idRECT = define_struct(tRECT)         
+
+constant tPAINTSTRUCT = """
+typedef struct tagPAINTSTRUCT {
+  HDC  hdc;
+  BOOL fErase;
+  RECT rcPaint;
+  BOOL fRestore;
+  BOOL fIncUpdate;
+  BYTE rgbReserved[32];
+} PAINTSTRUCT, *PPAINTSTRUCT;
+"""
+constant idPAINTSTRUCT = define_struct(tPAINTSTRUCT)
+
+constant CS_HREDRAW = 2,
+         CS_VREDRAW = 1,
+         SW_SHOWNORMAL = 1,
+         WM_CREATE = #01,
+         WM_PAINT  = #0F,
+         WM_DESTROY = #02,
+         WM_CHAR = 258,
+         VK_ESCAPE = 27,
+         SND_FILENAME = #00020000,
+         SND_ASYNC    = #00000001,
+         DT_SINGLELINE = #0020,
+         DT_CENTER     = #0001,
+         DT_VCENTER    = #0004,
+         WS_OVERLAPPED  = #00000000,
+         WS_CAPTION     = #00C00000,
+         WS_SYSMENU     = #00080000,
+         WS_THICKFRAME  = #00040000,
+         WS_MINIMIZEBOX = #00020000,
+         WS_MAXIMIZEBOX = #00010000,
+         IDC_ARROW = 32512,
+         WHITE_BRUSH = 0,
+         CW_USEDEFAULT = #80000000,
+         WS_OVERLAPPEDWINDOW = or_all({WS_OVERLAPPED, WS_CAPTION, WS_SYSMENU,
+                                       WS_THICKFRAME, WS_MINIMIZEBOX,
+                                       WS_MAXIMIZEBOX}),
+         DT_SINGLECENTER = or_all({DT_SINGLELINE, DT_CENTER, DT_VCENTER}),
+         SND_FILEASYNC = or_bits(SND_FILENAME,SND_ASYNC)
+
+integer xLoadIcon, xLoadCursor, xGetStockObject, xRegisterClassEx,
+        xCreateWindowEx, xShowWindow, xUpdateWindow, xGetMessage,
+        xTranslateMessage, xDispatchMessage, xPlaySound, xBeginPaint,
+        xGetClientRect, xDrawText, xEndPaint, xPostQuitMessage, xDefWindowProc,
+        xGetLastError
+
+procedure not_found(sequence name)
+    crash("Couldn't find " & name)
+end procedure
+
+function link_dll(sequence name)
+    -- dynamically link a dll
+    atom lib = open_dll(name)
+    if lib=NULL then not_found(name) end if
+    return lib
+end function
+
+function link_c_func(atom dll, sequence name, sequence args, atom result)
+    -- dynamically link a C routine as a function
+    integer handle = define_c_func(dll, name, args, result)
+    if handle=-1 then not_found(name) end if
+    return handle
+end function
+
+function link_c_proc(atom dll, sequence name, sequence args)
+    -- dynamically link a C routine as a procedure
+    integer handle = define_c_proc(dll, name, args)
+    if handle=-1 then not_found(name) end if
+    return handle
+end function
+
+procedure link_dll_routines()
+    -- get handles to all dll routines that we need
+
+    atom user32 = link_dll("user32.dll"),
+         gdi32 = link_dll("gdi32.dll"),
+         winmm = link_dll("winmm.dll"),
+         kernel32 = link_dll("kernel32.dll")
+
+    xLoadIcon = link_c_func(user32, "LoadIconA", {C_POINTER, C_INT}, C_INT)
+    xLoadCursor = link_c_func(user32, "LoadCursorA", {C_POINTER, C_INT}, C_INT)
+    xGetStockObject = link_c_func(gdi32, "GetStockObject", {C_INT}, C_INT)
+    xRegisterClassEx = link_c_func(user32, "RegisterClassExA", {C_POINTER}, C_INT)
+    xCreateWindowEx = link_c_func(user32, "CreateWindowExA",
+                                  {C_INT, C_INT,C_INT,C_INT,C_INT,C_INT,C_INT,C_INT,C_INT,C_INT,C_INT,C_INT},
+                                  C_INT)
+    xShowWindow = link_c_proc(user32, "ShowWindow", {C_INT, C_INT})
+    xUpdateWindow = link_c_proc(user32, "UpdateWindow", {C_INT})
+    xGetMessage = link_c_func(user32, "GetMessageA",
+                             {C_INT, C_INT, C_INT, C_INT}, C_INT)
+    xTranslateMessage = link_c_proc(user32, "TranslateMessage", {C_INT})
+    xDispatchMessage = link_c_proc(user32, "DispatchMessageA", {C_INT})
+    xPlaySound = link_c_proc(winmm, "PlaySound", {C_INT, C_INT, C_INT})
+    xBeginPaint = link_c_func(user32, "BeginPaint", {C_INT, C_POINTER}, C_INT)
+    xGetClientRect = link_c_proc(user32, "GetClientRect", {C_INT, C_POINTER})
+    xDrawText = link_c_proc(user32, "DrawTextA",
+                           {C_INT, C_INT, C_INT, C_INT, C_INT})
+    xEndPaint = link_c_proc(user32, "EndPaint", {C_INT, C_INT})
+    xPostQuitMessage = link_c_proc(user32, "PostQuitMessage", {C_INT})
+    xDefWindowProc = link_c_func(user32, "DefWindowProcA",
+                                {C_INT, C_INT, C_INT, C_INT}, C_INT)
+    xGetLastError = link_c_func(kernel32,"GetLastError",{},C_INT)
+end procedure
+
+link_dll_routines()
+
+function WndProc(atom hwnd, iMsg, wParam, lParam)
+    -- callback routine to handle Window class
+
+    if iMsg=WM_CHAR and wParam=VK_ESCAPE then
+        iMsg = WM_DESTROY
+    end if
+    switch iMsg do
+
+        case WM_CREATE:
+
+            atom wav_file = allocate_string(`\Windows\Media\tada.wav`)
+            c_proc(xPlaySound, {wav_file,NULL,SND_FILEASYNC})
+            free(wav_file)
+
+        case WM_PAINT:
+
+            atom pPAINTSTRUCT = allocate_struct(idPAINTSTRUCT),
+                 pRECT = allocate_struct(idRECT),
+                 hdc = c_func(xBeginPaint, {hwnd, pPAINTSTRUCT}),
+                 Phix = allocate_string("A Plain Vanilla Window using Phix!")
+            c_proc(xGetClientRect, {hwnd, pRECT})
+            c_proc(xDrawText, {hdc, Phix, -1, pRECT, DT_SINGLECENTER})
+            c_proc(xEndPaint, {hwnd, pPAINTSTRUCT})
+            free({Phix,pPAINTSTRUCT,pRECT})
+
+        case WM_DESTROY:
+
+            c_proc(xPostQuitMessage, {0})
+
+        default:
+
+            return c_func(xDefWindowProc, {hwnd, iMsg, wParam, lParam})
+
+    end switch
+    return 0
+end function
+
+procedure win_main()
+
+    atom pWndclass = allocate_struct(idWNDCLASSEX),
+         szAppName = allocate_string("HelloWin"),
+         WndProcAddress = call_back(WndProc),
+         icon_handle = c_func(xLoadIcon, {instance(), 10})
+
+    set_struct_field(idWNDCLASSEX,pWndclass,"cbSize",get_struct_size(idWNDCLASSEX))
+    set_struct_field(idWNDCLASSEX,pWndclass,"style",or_bits(CS_HREDRAW, CS_VREDRAW))
+    set_struct_field(idWNDCLASSEX,pWndclass,"lpfnWndProc",WndProcAddress)
+    set_struct_field(idWNDCLASSEX,pWndclass,"hIcon",icon_handle)
+    set_struct_field(idWNDCLASSEX,pWndclass,"hIconSm",icon_handle)
+    set_struct_field(idWNDCLASSEX,pWndclass,"hCursor",c_func(xLoadCursor, {NULL, IDC_ARROW}))
+    set_struct_field(idWNDCLASSEX,pWndclass,"hbrBackground",c_func(xGetStockObject, {WHITE_BRUSH}))
+    set_struct_field(idWNDCLASSEX,pWndclass,"lpszClassName",szAppName)
+
+    if c_func(xRegisterClassEx, {pWndclass})=0 then
+        crash("RegisterClassEx error #%08x",{c_func(xGetLastError,{})})
+    end if
+
+    sequence cwargs = {0,                   -- extended style
+                       szAppName,           -- window class name
+                       "Phix for Windows",  -- window caption
+                       WS_OVERLAPPEDWINDOW, -- window style
+                       CW_USEDEFAULT,       -- initial x position
+                       CW_USEDEFAULT,       -- initial y position
+                       CW_USEDEFAULT,       -- initial x size
+                       CW_USEDEFAULT,       -- initial y size
+                       NULL,                -- parent window handle
+                       NULL,                -- window menu handle
+                       0,                   -- hInstance // program instance handle
+                       NULL}
+    atom hwnd = c_func(xCreateWindowEx,cwargs)
+    if hwnd=0 then
+        crash("CreateWindowEx error #%08x",{c_func(xGetLastError,{})})
+    end if
+    free({szAppName,pWndclass})
+
+    c_proc(xShowWindow, {hwnd, SW_SHOWNORMAL})
+    c_proc(xUpdateWindow, {hwnd})
+
+    atom pMSG = allocate_struct(idMESSAGE)
+    while c_func(xGetMessage, {pMSG, NULL, 0, 0}) do
+        c_proc(xTranslateMessage, {pMSG})
+        c_proc(xDispatchMessage, {pMSG})
+    end while
+    free(pMSG)
+end procedure
+
+win_main()
+

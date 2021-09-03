@@ -1,0 +1,943 @@
+js syntax file
+BlockComment /* */
+LineComment //
+//
+// About .syn files
+// ================
+// [[For an up-to-date version of these notes, always refer to Euphoria.syn]]
+// All files with a .syn extension in the /syn subdirectory are loaded when
+// the editor starts. They are reloaded if saved in the editor, which makes
+// it easy to add and test new keywords, etc.
+// Should a fatal error occur (which obviously it should not), then it may be
+// necessary to rename/move/delete/restore the offending .syn file.
+// The first line of a .syn file must be <Name> followed by " syntax file".
+// The second line may be "BlockComment" followed by start/end pair(s).
+//  eg  BlockComment /* */ <!-- --> [[ ]]
+//  Note that .syn files themselves may *NOT* contain block comments (since
+//        any and all support of them is in easynclr.e, not easynld.e).
+// The next line must be "LineComment" followed by a comment lead-in (if any).
+// This LineComment directive not only controls colourisation during editing of
+//  the files listed in the FileExtensions directive (see below), but also
+//  defines the comment method for the remainder of the .syn file.
+//        Therefore comments may not appear in a .syn file before the LineComment line.
+//        Note also that Edit/Comment and Edit/Uncomment (and the keyboard shortcuts)
+//        use the LineComment defined in None.syn when editing a .syn file (sorry!)
+//  As an example, C/C++ line comments are // so all these lines could begin with
+//  // instead of --, which is an operator in C/C++. If (eg) C.syn used -- as a
+//        line comment, it would not be possible to define -- as an operator!
+// If the programming language you are trying to support does not support line 
+//  comments (which should be very rare) then you cannot comment the syn file.
+//
+//
+// Sections
+// ========
+// All words beginning in column 1 (apart from comments) begin a section. 
+// The following sections should be defined:
+//                BlockComment, [optional]
+//                LineComment,
+//                TokenStart,
+//                TokenChar, [optional]
+//                TokenFirst, [optional]
+//                TokenLast, [optional]
+//                Escapes, [optional]
+//         Delimiters, [optional, except in None.syn]
+//                Braces, [optional]
+//                Operators, [optional]
+//                Illegal, [optional] and
+//                FileExtensions,
+// in that order. 
+// Then follow a number of keyword collections. The name is not "recognised"
+// apart from the fact that it begins in column 1 and is displayed in the 
+// Options/Colours window when that is opened when editing a file with one of
+// the file extensions (as defined in the FileExtensions section). These
+// section names should not contain spaces, a space is automatically inserted
+// between any lowercase character followed by an uppercase character.
+// Finally there is a Scheme section which defines the /default/ colours.
+// If a .clr file exists (eg Euphoria.clr) then it overrides these defaults.
+// Note: if you /DELETE/ sections, the .clr file may become invalid, though it
+//  should be trivial to edit it, removing the offending line(s). It is also 
+//  a good idea to copy the lines from the .clr back to the final Scheme 
+//  section of this file (which also becomes invalid if sections are removed).
+//  If you /ADD/ sections, you don't need to do anything special, except 
+//  perhaps to run Options/Colours to give new sections an appropriate colour.
+//
+
+//
+// Token characters must be specified next.
+//
+TokenStart abcedfghijklmnopqrstuvwxyz
+TokenStart ABCDEFGHIJKLMNOPQRSTUVWXYZ_$
+TokenChar 0123456789
+// TokenFirst can be used to specify characters which are only valid at the start
+// of a token (eg # in #include or < in <table> [HTML]), and TokenLast can be used
+// to specify characters which terminate a token (eg > in <table> or $ in MID$), eg
+// TokenFirst #<        // by default this set is empty
+// TokenLast >$        // ""
+// In practice, TokenLast defines single-character tokens, so internally the
+//  syntax colouring will treat <table> as "<table" and ">". eg see Html.syn
+//
+// Whitespace is defaulted to #09101320, ie tab, lf, cr, and space. There is 
+// as yet no way to change this, though I will say it should be specified as 
+// a hexadecimal stringset rather than OS/editor/language dependent means.
+//
+// Likewise String and Character parsing is currently hard-coded (to ' and ").
+// You should not specify ' or " as delimiters or operators.
+//
+Escapes \rnt"0\'xabfvu/2
+//Escapes \rnt"0\'x2
+
+// Next we have Delimiters, Operators, and Illegals (in that order).
+// The Delimiter section is optional (except in None.syn) and allows additional
+//        characters to be coloured as "Other". The idea is that in "integer a,integer b"
+//        then "a,integer" is not scanned as a single word, as well as colouring the ","
+//        normally as opposed to "Illegal". See easynld.e for technical details.
+// All characters used in the Operators section are automatically delimiters.
+Delimiters #:,.?;
+Operators < <= > >= = != + += - -= * *= / /= .. & &= | || ^= ! \ ~ % ^ . ; : , ?
+
+// The Braces section begins with a digit specifying the number of nesting levels 
+// of colour required (1..7). Only pairs from ()<>[]{} are permitted. 
+// If the number of nesting levels is set above 5 you may have difficultly finding
+// enough appropriate colours to use. A lower number does not, of course, limit
+// the code that can be written, just how it is coloured. If the nesting level is
+// exceeded, inner brackets are coloured starting from 1 again.
+//
+Braces 5 ()[]{}
+
+//
+// FileExtensions should be specified next. This is not optional.
+//
+FileExtensions js
+
+// The optional Indents section. If present, this section lists words and
+//        characters which affect autoindentation. The first word must be "+" or "-",
+//        any following words or characters increase or decrease the indent level,
+//        until the next "+" or "-". Please fit everything on one line.
+//
+Indents + { - }
+
+// The optional AutoComplete section. If present, this section must
+// end with a "##end AutoComplete" line. Note that any comments in this
+// section must begin in column 1, otherwise they are misinterpreted as
+// being part of the autocompletion text. For more details, please
+// see eauto.e Ideally, leave this in English, and add translations
+// in elng_XXX.txt (if not English, that is).
+//
+//AutoComplete
+//##end AutoComplete
+
+//
+// The remaining sections are listed in the Options/Colours window. 
+// The names used should not contain spaces; these are automatically 
+// inserted after any lower-case character which is followed by an 
+// upper-case one. Otherwise these names are entirely descriptive and 
+// are not defined or used anywhere else (though they must match entries
+// in the final Scheme and .clr files). Remember that all words
+// beginning in column 1 are interpreted as section names.
+
+ReservedWords
+        async
+        await
+        break
+        case
+        catch
+        class
+        console
+        const
+        continue
+        default
+//      delete
+        do
+        else
+//      enum
+        exit
+        for
+        function
+//      goto
+        if
+        in
+        instanceof
+        new
+//      private
+        process
+//      protected
+//      public
+        return
+//      static_cast
+//      std
+        switch
+        this
+        throw
+        try
+        typeof
+//      using
+//      virtual
+        while
+
+Constants
+        false
+        null
+        NULL
+        true
+        undefined
+//      TRUE
+//      FALSE 
+
+        ASCENDING
+        DESCENDING
+        DT_DAY
+        DT_DOW
+        DT_DOY
+        DT_GMT
+        DT_HOUR
+        DT_MINUTE
+        DT_MONTH
+        DT_MSEC
+        DT_SECOND
+        DT_YEAR
+        E
+        E_USER
+        HSIEH30
+        INVLN10
+        JAVASCRIPT
+        JS
+        LINUX
+        MAX_HEAP
+        MIN_HEAP
+        MPFR_RNDN
+        MPFR$T
+        MPFR$N
+        MPFR$D
+        MPFR$E
+        MPFR$R
+        MPFR$P
+        MPFR$default_precision
+        MPFR$default_rounding
+        MPQ$N 
+        MPQ$D 
+        MPZ$B 
+        NORMAL_ORDER
+        PI
+        pp_Ascii
+        pp_Brkt
+        pp_Date
+        pp_File
+        pp_FltFmt
+        pp_Indent
+        pp_IntCh
+        pp_IntFmt
+        pp_Maxlen
+        pp_Nest
+        pp_Pause
+        pp_Q22
+        pp_StrFmt
+        REVERSE_ORDER
+        SLASH
+        TEST_ABORT
+        TEST_CRASH
+        TEST_PAUSE
+        TEST_PAUSE_FAIL
+        TEST_QUIET
+        TEST_SHOW_ALL
+        TEST_SHOW_FAILED
+        TEST_SUMMARY
+        WEB
+        WINDOWS
+        CD_BLACK
+        CD_BLUE
+        CD_CYAN
+        CD_DARK_GREEN
+        CD_DBUFFER
+        CD_FILL
+        CD_GL
+        CD_GREY
+        CD_IUP
+        CD_PARCHMENT
+        CD_RED
+        CD_WHITE
+        IUP_CENTER
+        IUP_CLOSE
+        IUP_CONTINUE
+        IUP_DEFAULT
+        IUP_IGNORE
+        IUP_MASK_INT
+        IUP_MASK_UINT
+
+Types
+        BigInt
+        Date
+        let
+        RegExp
+        var
+//      typedef
+//      struct
+//      const
+//      static
+//      unsigned
+//      extern
+//      bool BOOL
+//      char uchar CHAR UCHAR
+//      double
+//      float
+//      int uint INT UINT
+//      int64_t
+//      long ulong LONG ULONG
+//      short ushort
+//      string
+//      time_t      // typedef long time_t; 
+//      uint64_t
+//      volatile
+//      wchar_t
+
+properties
+        alignItems
+        background
+        body
+        bottom
+        childNodes
+        classList
+        className
+        clientHeight
+        clientWidth
+        clientX
+        clientY
+        cssText
+        currentTarget
+        cursor
+        display
+        document
+        event
+        fillStyle
+        firstChild
+        firstElementChild
+        height
+        innerHeight
+        innerHTML
+        innerText
+        innerWidth
+        justifyContent
+        keyCode
+        lastElementChild
+        left
+        length
+        lineWidth
+        margin
+        marginTop
+        marginLeft 
+        marginBottom
+        marginRight
+        maxWidth
+        nextElementSibling
+        nextSibling
+        nodeType
+        offsetHeight
+        offsetLeft
+        offsetWidth
+        offsetTop
+        onblur
+        onchange
+        onclick
+        oncontextmenu
+        ondblclick
+        ondragstart
+        onerror
+        onfocus
+        oninput
+        onkeydown
+        onkeyup
+        onload
+        onmousedown
+        onresize
+        onscroll
+        overflow
+        pageX
+        pageY
+        parentNode
+        position
+        previousElementSibling
+        readyState
+        responseXML
+        right
+        scrollHeight
+        scrollLeft
+        scrollTop
+        scrollWidth
+        selectionEnd
+        selectionStart
+        status
+        strokeStyle
+        style
+        target
+        textAlign
+        textContent
+        tFoot
+        tHead
+        title
+        top
+        value
+        visibility
+        width
+        window
+
+lib
+        add
+        addEventListener
+        alert
+        appendChild
+        Array
+        asIntN
+        asUintN
+        atan
+        beginPath
+        bind
+        canvas
+        charAt
+        charCodeAt
+        clearInterval
+        cloneNode
+        close
+        closePath
+        concat
+        contains
+        createElement
+        createElementNS
+        createTextNode
+        defineProperty
+        devicePixelRatio
+        disconnect
+        documentElement
+        Error
+        fill
+        fillRect
+        filter
+        floor
+        focus
+        forEach
+        from
+        fromCharCode
+        getAttribute
+        getBoundingClientRect
+        getComputedStyle
+        getContext
+        getDate
+        getDay
+        getElementById
+        getElementsByClassName
+        getElementsByTagName
+        getFullYear
+        getHours
+        getMilliseconds
+        getMinutes
+        getMonth
+        getSeconds
+        hasAttribute
+        hasChildNodes
+        hasOwnProperty
+        indexOf
+        insertAdjacentHTML
+        insertAdjacentText
+        insertBefore
+        isArray
+        isFinite
+        isInteger
+        isIntersecting
+        isSafeInteger
+        JSON
+        lastIndexOf
+        lineTo
+        localeCompare
+        map
+        Math
+        moveTo
+        now
+        Number
+        observe
+        open
+        parentElement
+        parseFloat
+        parseInt
+        peek
+        pop
+        pow
+        preventDefault
+        push
+        querySelector
+        querySelectorAll
+        readFile
+        remove
+        removeAttribute
+        removeChild
+        removeEventListener
+        repeat
+        replace
+        replaceChild
+        requestAnimationFrame
+        require
+        reverse
+        round
+        send
+        setAttribute
+        setInterval
+        setTimeout
+        slice
+        sort
+        splice
+        split
+        sqrt
+        stopPropagation
+        String
+        stringify
+        stroke
+        strokeRect
+        substr
+        toExponential
+        toFixed
+        toggle
+        toLowerCase
+        toNumber
+        toPrecision
+        toString
+        toUpperCase
+        transform
+        trunc
+        unshift
+        valueOf
+        which
+        XMLHttpRequest
+        zIndex
+
+//p2js/pGUI.js/builtins:
+        abort
+        abs
+        and_bits
+        and_bitsu
+        append
+        apply
+        arccos
+        arcsin
+        arctan
+        assert
+        atom
+        atan2
+        bankers_rounding
+        binary_search
+        bits_to_int
+        bytes_to_int
+        call_func
+        call_proc
+        $catch
+        cdCanvasActivate
+        cdCanvasClear
+        cdCanvasEnd
+        cdCanvasFlush
+        cdCanvasPixel
+        cdCanvasVertex
+        cdCreateCanvas
+        ceil
+        $charArray
+        $class_name
+        columnize
+        compare
+        $conCat
+        cos
+        crash
+        date
+        decode_base64
+        deld
+        deep_copy
+        destroy_dict
+        dict_name
+        dict_size
+        $docBody
+        elapsed
+        elapsed_short
+        encode_base64
+        equal
+        exp
+        extract
+        factors
+        find
+        find_all
+        find_any
+        flatten
+        gcd
+        get_maxprime
+        get_prime
+        get_primes
+        get_primes_le
+        get_rand
+        get_routine_info
+        getd
+        getd_all_keys
+        getd_by_index
+        getd_index
+        getd_partial_key
+        getdd
+        head
+        Icallback
+        insert
+        int_to_bits
+        int_to_bytes
+        integer
+        is_dict
+        is_prime
+        IupButton
+        IupCanvas
+        IupClose
+        IupCloseOnEscape
+        IupDialog
+        IupFill
+        IupFlatButton
+        IupFlatLabel
+        IupGetAttribute
+        IupGetDouble
+        IupGetInt
+        IupGetIntInt
+        IupGLCanvas
+        IupGLMakeCurrent
+        IupHbox
+        IupHide
+        IupMainLoop
+        IupMap
+        IupOpen
+        IupSetAttribute
+        IupSetAttributes
+        IupSetCallback
+        IupSetGlobal
+        IupSetInt
+        IupSetStrAttribute
+        IupShow
+        IupStoreAttribute
+        IupTable
+        IupText
+        IupTimer
+        IupTreeAddNodes
+        IupTreeGetUserId
+        IupTreeView
+        IupUpdate
+        IupVbox
+        join
+        join_by
+        join_path
+        lcm
+        log
+        lower
+        machine_bits
+        machine_word
+        match
+        match_all
+        max
+        maxsq
+        min
+        minsq
+        mod
+        mpfr
+        MPFR$COMMAFILL
+        MPFR$GCD
+        MPFR$LCM
+        MPFR$normalise
+        MPFR$PREFIX
+        MPFR$precision_in_binary
+        MPFR$precision_in_dp
+        MPFR$replace_e
+        mpfr_add
+        mpfr_const_pi
+        mpfr_div
+        mpfr_div_si
+        mpfr_div_z
+        mpfr_free
+        mpfr_get_d
+        mpfr_get_default_precision
+        mpfr_get_default_rounding_mode
+        mpfr_get_fixed
+        mpfr_get_precision
+        mpfr_init
+        mpfr_inits
+        mpfr_init_set_q
+        mpfr_init_set_z
+        mpfr_mul
+        mpfr_mul_si
+        mpfr_pow_si
+        mpfr_set
+        mpfr_set_d
+        mpfr_set_default_precision
+        mpfr_set_default_rounding_mode
+        mpfr_set_precision
+        mpfr_set_q
+        mpfr_set_si
+        mpfr_set_str
+        mpfr_set_z
+        mpfr_si_div
+        mpfr_si_sub
+        mpfr_sqrt
+        mpfr_sub
+        mpfr_sub_si
+        mpir_get_versions
+        mpir_open_dll
+        mpq
+        mpq_abs
+        mpq_add
+        mpq_add_si
+        mpq_canonicalize
+        mpq_cmp
+        mpq_cmp_si
+        mpq_div
+        mpq_div_2exp
+        mpq_free
+        mpq_get_den
+        mpq_get_num
+        mpq_get_str
+        mpq_init
+        mpq_init_set
+        mpq_init_set_si
+        mpq_init_set_str
+        mpq_init_set_z
+        mpq_inits
+        mpq_inv
+        mpq_mul
+        mpq_neg
+        mpq_set
+        mpq_set_si
+        mpq_set_str
+        mpq_set_z
+        mpq_sub
+        mpz
+        mpz_abs
+        mpz_add
+        mpz_addmul
+        mpz_addmul_ui
+        mpz_add_si
+        mpz_add_ui
+        mpz_bin_uiui
+        mpz_cdiv_q
+        mpz_cmp
+        mpz_cmp_si
+        mpz_divisible_p
+        mpz_divisible_ui_p
+        mpz_even
+        mpz_fac_ui
+        mpz_factorstring
+        mpz_fdiv_ui
+        mpz_fdiv_q
+        mpz_fdiv_q_2exp
+        mpz_fdiv_q_ui
+        mpz_fdiv_r
+        mpz_fib_ui
+        mpz_fib2_ui
+        mpz_fits_atom
+        mpz_fits_integer
+        mpz_free
+        mpz_gcd
+        mpz_gcd_ui
+        mpz_get_atom
+        mpz_get_integer
+        mpz_get_str
+        mpz_init
+        mpz_init_set
+        mpz_inits
+        mpz_lcm
+        mpz_lcm_ui
+        mpz_max
+        mpz_min
+        mpz_mod
+        mpz_mod_ui
+        mpz_mul
+        mpz_mul_2exp
+        mpz_mul_d
+        mpz_mul_si
+        mpz_neg
+        mpz_nthroot
+        mpz_odd
+        mpz_pow_ui
+        mpz_powm
+        mpz_powm_ui
+        mpz_prime
+        mpz_prime_factors
+        mpz_prime_mr
+        mpz_rand
+        mpz_rand_ui
+        mpz_re_compose
+        mpz_remove
+        mpz_scan0
+        mpz_scan1
+        mpz_set
+        mpz_set_d
+        mpz_set_si
+        mpz_set_str
+        mpz_sign
+        mpz_sizeinbase
+        mpz_sqrt
+        mpz_sub
+        mpz_sub_si
+        mpz_sub_ui
+        mpz_tdiv_q_2exp
+        mpz_tdiv_r_2exp
+        mpz_tstbit
+        mpz_ui_pow_ui
+        mpz_xor
+        named_dict
+        new_dict
+        not_bits
+        not_bitsu
+        object
+        or_all
+        or_allu
+        or_bits
+        or_bitsu
+        pad
+        pad_head
+        pad_tail
+        papply
+        $paranormalise
+        peep_dict
+        platform
+        pop_dict
+        power
+        pq_add
+        pq_destroy
+        pq_empty
+        pq_new
+        pq_peek
+        pq_pop
+        pq_pop_data
+        pq_size
+        prepend
+        prime_factors
+        print
+        printf
+        product
+        puts
+        rand
+        reinstate
+        remainder
+        $repe
+        $repss
+        requires
+        rfind
+        rmatch
+        rnd
+        routine_id
+        $sidii
+        sequence
+        set_rand
+        setd
+        setd_default
+        shorten
+        sign
+        sin
+        split_any
+        split_by
+        sprint
+        sprintf
+        sq_abs
+        sq_add
+        sq_and
+        sq_and_bits
+        sq_arccos
+        sq_arcsin
+        sq_arctan
+        sq_atom
+        sq_ceil
+        sq_cmp
+        sq_cos
+        sq_div
+        sq_eq
+        sq_floor
+        sq_floor_div
+        sq_ge
+        sq_gt
+        sq_int
+        sq_le
+        sq_log
+        sq_log10
+        sq_log2
+        sq_lt
+        sq_max
+        sq_min
+        sq_mod
+        sq_mul
+        sq_ne
+        sq_not
+        sq_not_bits
+        sq_or
+        sq_or_bits
+        sq_power
+        sq_rand
+        sq_rmdr
+        sq_round
+        sq_seq
+        sq_sign
+        sq_sin
+        sq_sqrt
+        sq_str
+        sq_sub
+        sq_tan
+        sq_trunc
+        sq_uminus
+        sq_xor
+        sq_xor_bits
+        square_free
+        $storeAttr
+        string
+        $subse
+        $subss
+        substitute
+        substitute_all
+        sum
+        tagset
+        tail
+        tan
+        time
+        $topZindex
+        traverse_dict
+        traverse_dict_partial_key
+        trim
+        trim_head
+        trim_tail
+        $typeCheckError
+        unique
+        upper
+        version
+        wait_key
+        xor
+        xor_bits
+        xor_bitsu
+
+illegal
+///////
+        elsif
+        mpfr_get_default_prec
+        mpfr_set_default_prec
+        progress
+        split_path
+        srcElement
+
+//
+// The Scheme section defines the /default/ colours (and exists mainly to 
+//        simplify distribution and installation).
+// If a .clr file exists (eg Euphoria.clr) then it overrides these defaults.
+// The Options/Colours window creates/overwrites .clr files on exit.
+//
+Scheme
+ Background Silver
+ Comments Navy Italic
+ Highlight Gray
+ CurrentLine #E9E9E9
+ Strings Green
+ Symbols Blue
+ Illegals Red
+ Other Black
+ Brace1 Blue
+ Brace2 Purple
+ Brace3 Maroon
+ Brace4 Purple
+ Brace5 Green
+ ReservedWords Teal
+ Constants #004600
+// Preprocessor Teal
+ Types #FF7171
+// properties Purple
+ properties Maroon
+ lib Maroon
+// Borland #681504
+ illegal #0000FF Italic

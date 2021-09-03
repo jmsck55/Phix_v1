@@ -1,0 +1,14 @@
+--
+-- t05inc0.exw
+--
+--without warning -- lots of unused stuff in here
+puts(1,"inc0a\n")
+
+global integer z, p
+z=1 p=2
+include t05inc0b.e  -- another z(=3), and q(=4)
+if z!=1 then crash("z!=1\n") end if
+if p!=2 then crash("p!=2\n") end if
+if q!=4 then crash("q!=4\n") end if
+puts(1,"inc0\n")
+

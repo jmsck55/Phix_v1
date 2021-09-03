@@ -1,0 +1,319 @@
+Html syntax file
+BlockComment <!-- -->
+LineComment //
+//
+// About .syn files
+// ================
+// [[For an up-to-date version of these notes, always refer to Euphoria.syn]]
+// All files with a .syn extension in the /syn subdirectory are loaded when
+// the editor starts. They are reloaded if saved in the editor, which makes
+// it easy to add and test new keywords, etc.
+// Should a fatal error occur (which obviously it should not), then it may be
+// necessary to rename/move/delete/restore the offending .syn file.
+// The first line of a .syn file must be <Name> followed by " syntax file".
+
+// The second line may be "BlockComment" followed by start/end pair(s).
+//  eg  BlockComment /* */ <!-- --> [[ ]]
+//  Note that .syn files themselves may *NOT* contain block comments (since
+//      any and all support of them is in easynclr.e, not easynld.e).
+// The next line must be "LineComment" followed by a comment lead-in (if any).
+// This LineComment directive not only controls colourisation during editing of
+//  the files listed in the FileExtensions directive (see below), but also
+//  defines the comment method for the remainder of the .syn file.
+//      Therefore comments may not appear in a .syn file before the LineComment line.
+//      Note also that Edit/Comment and Edit/Uncomment (and the keyboard shortcuts)
+//      use the LineComment defined in None.syn when editing a .syn file (sorry!)
+//  As an example, C/C++ line comments are // so all these lines could begin with
+//  // instead of --, which is an operator in C/C++. If (eg) C.syn used -- as a
+//      line comment, it would not be possible to define -- as an operator!
+// If the programming language you are trying to support does not support line 
+//  comments (which should be very rare) then you cannot comment the syn file.
+//      (actually, worse than that, as the LineComment section is not optional..)
+//
+//
+// Sections
+// ========
+// All words beginning in column 1 (apart from comments) begin a section. 
+// Some of these are recognised: LineComment, TokenStart, TokenChar, 
+// TokenFirst, TokenLast, Whitespace, Escapes, Delimiters, Operators,
+// Illegal, and (lastly) FileExtensions. The remainder need not be
+// pre-declared; their names are shown in the Options/Colours window. 
+//
+
+//
+// Token characters may be be specified next.
+//
+TokenStart abcedfghijklmnopqrstuvwxyz
+TokenStart ABCDEFGHIJKLMNOPQRSTUVWXYZ
+TokenChar 0123456789_/\-
+// TokenFirst can be used to specify characters which are only valid at the start
+// of a token (eg # in #include or < in <table> [HTML]), and TokenLast can be used
+// to specify characters which terminate a token (eg > in <table> or $ in MID$), eg
+TokenFirst #<   // by default this set is empty
+TokenLast >$            // ""
+// In practice, TokenLast defines single-character tokens, so internally the
+//  syntax colouring will treat <table> as "<table" and ">". eg see Html.syn
+//
+// Whitespace is defaulted to #09101320, ie tab, lf, cr, and space. There is 
+// as yet no way to change this, though I will say it should be specified as 
+// a hexadecimal stringset rather than OS/editor/language dependent means.
+//
+// Likewise String and Character parsing is currently hard-coded (to ' and ").
+// You should not specify ' or " as delimiters or operators.
+//
+// Escape characters are defined using a single leadin followed by the valid 
+// characters which may follow (this permits \r \n \t \\ \' and \"):
+//
+Escapes \rntu\'"Ub#xeE
+
+Delimiters #$:,.;@^%()
+Operators = + * & | ! ? ~
+
+Braces 5 []{}
+
+//[NOT YET SUPPORTED:]
+//Illegal ~@%^|; // not needed if we have specified the delimiters
+
+//
+// FileExtensions should be specified next. This is not optional.
+//
+FileExtensions htm html php hhc hhk clr     // (.clr here is for testing purposes only)
+
+//
+// The remaining sections are listed in the Options/Colours window. 
+// The names used should not contain spaces; these are automatically 
+// inserted after any lower-case character which is followed by an 
+// upper-case one. Otherwise these names are entirely descriptive and 
+// are not defined or used anywhere else. Remember that all words
+// beginning in column 1 are interpreted as section names.
+Tags
+        / >
+        <php </php
+// <a>, <b>, <i> deliberately ommited to stop eg (I am a) looking awful
+//      a A
+        <a </a <A </A
+        <address </address <ADDRESS </ADDRESS
+        amp
+        apos
+        <applet </applet <APPLET </APPLET
+        <area <AREA
+//      b B
+        <b </b <B </B
+        <blink </blink <BLINK </BLINK
+        <blockquote </blockquote <BLOCKQUOTE </BLOCKQUOTE
+        <body </body <BODY </BODY
+        <br <BR <br/ <BR/
+        <button </button <BUTTON </BUTTON
+        <canvas </canvas <CANVAS </CANVAS
+        <caption </caption <CAPTION </CAPTION
+        <center </center <CENTER </CENTER
+        <cite </cite <CITE </CITE
+        <code </code <CODE </CODE
+        <col </col
+        <colgroup </colgroup
+        <datalist </datalist
+        <dd </dd <DD </DD
+        deg
+        <del </del
+        <details </details
+        <dfn </dfn <DFN </DFN
+        <div </div <DIV </DIV
+        <dl </dl <DL </DL
+        <dt </dt <DT </DT
+        <em </em <EM </EM
+        <font </font <FONT </FONT
+        <footer </footer
+        <form </form <FORM </FORM
+        gt GT
+        <h1 </h1 <H1 </H1
+        <h2 </h2 <H2 </H2
+        <h3 </h3 <H3 </H3
+        <h4 </h4 <H4 </H4
+        <h5 </h5 <H5 </H5
+        <head </head <HEAD </HEAD
+        <header </header <HEADER </HEADER
+        <hr </hr <HR </HR
+        <html </html <HTML </HTML
+//      i I
+        <i </i <I </I
+        <iframe </iframe <IFRAME </IFRAME
+        <img </img <IMG </IMG
+        <input </input <INPUT </INPUT
+        <kbd </kbd <KBD </KBD
+        <label </label <LABEL </LABEL
+        <li </li <LI </LI
+        <link </link <LINK </LINK
+        ldquo
+        lsquo
+        lt LT
+        <main </main
+        <map </map <MAP </MAP
+        <meta </meta <META </META
+        <meter </meter
+        <nav </nav
+        <nobr </nobr <NOBR </NOBR
+        <noscript </noscript <NOSCRIPT </NOSCRIPT
+        <object </object <OBJECT </OBJECT
+        <ol </ol <OL </OL
+        <option </option <OPTION </OPTION
+        <output </output
+        <p </p <P </P
+        <param <PARAM
+        <pre </pre <PRE </PRE
+        <progress </progress
+        quot
+        rdquo
+        rsquo
+        <script </script <SCRIPT </SCRIPT
+        <samp </samp <SAMP </SAMP
+        <section </section <SECTION </SECTION
+        <select </select <SELECT </SELECT
+        <small </small <SMALL </SMALL
+        <span </span <SPAN </SPAN
+        <strong </strong <STRONG </STRONG
+        <style </style <STYLE </STYLE
+        <summary </summary
+        <sup </sup <SUP </SUP
+        tilde
+        <table </table <TABLE </TABLE
+        <tbody </tbody <TBODY </TBODY
+        <textarea </textarea <TEXTAREA </TEXTAREA
+        <tbody </tbody <TBODY </TBODY
+        <td </td <TD </TD
+        <tfoot </tfoot <TFOOT </TFOOT
+        <th </th <TH </TD
+        <thead </thead <THEAD </THEAD
+        <title </title <TITLE </TITLE
+        <tr </tr <TR </TR
+        <tt </tt <TT </TT
+        <ul </ul <UL </UL
+        <var </var <VAR </VAR
+        <wbr <WBR
+// umm...
+        DOCTYPE doctype html PUBLIC
+        nbsp
+        zwj
+
+Attributes
+        accept
+        action ACTION
+        align ALIGN
+        alink ALINK
+        allow
+        allowfullscreen
+        alt ALT
+        background BACKGROUND
+        bgcolor BGCOLOR
+        border BORDER
+        bottom BOTTOM
+        cellpadding CELLPADDING
+        cellspacing CELLSPACING
+        center CENTER
+        charset
+        class CLASS
+        color
+        cols
+        colspan COLSPAN
+        compact COMPACT
+        content CONTENT
+        contenteditable
+        coords COORDS
+        crossorigin
+        face FACE
+        for
+        frameborder
+        height HEIGHT
+        href HREF
+        http-equiv HTTP-EQUIV
+        id ID
+        integrity
+        lang
+        language LANGUAGE
+        left LEFT
+        leftmargin LEFTMARGIN
+        link LINK
+        list
+        marginheight MARGINHEIGHT
+        marginwidth MARGINWIDTH
+        max
+        maxlength MAXLENGTH
+        media MEDIA
+        method METHOD
+        middle MIDDLE
+        min
+        name NAME
+        noshade NOSHADE
+        nowrap NOWRAP
+        onchange
+        onLoad onload
+        onMouseOut
+        onMouseOver
+        placeholder
+        rel REL
+        rev REV
+        right RIGHT
+        rows
+        rowspan ROWSPAN
+        size SIZE
+        span
+        src SRC
+        step
+        style
+        text TEXT
+        title TITLE
+        top TOP
+        topmargin TOPMARGIN
+        type TYPE
+        usemap USEMAP
+        valign VALIGN
+        value VALUE
+        vlink VLINK
+        width WIDTH
+        xmlns
+
+PHP
+    if else
+
+    int
+        
+    clearstatcache
+    echo
+    fclose
+    fflush
+    fgets
+    file_exists
+    flock
+    fopen
+    ftell
+    ftruncate
+    fwrite
+    ignore_user_abort
+    print
+    rewind
+
+    false
+    LOCK_EX
+    LOCK_UN
+    true
+
+
+// Default Scheme: This defines the default colours to be used immediately after
+// installation; using Options/Colours creates a XXX.clr file which overrides this.
+Scheme
+ Background Silver
+ Comments Teal Italic
+ Highlight #A0A0A0
+ CurrentLine #B8B8B8
+ Strings Olive
+ Illegals Red
+ Operators Navy
+ URLs Olive Bold
+ Other Black
+ Brace1 Green
+ Brace2 Blue
+ Brace3 Purple
+ Brace4 Red
+ Brace5 Yellow
+ Tags Blue
+ Attributes Maroon
+ PHP Teal

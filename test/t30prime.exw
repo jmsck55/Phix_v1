@@ -1,0 +1,37 @@
+--
+-- t30prime.e
+--
+--with trace
+--trace(1)
+
+function primes(integer lim)
+integer n = 1, k, p, highest = 0
+    while n<lim do
+        k = 3
+        p = 1
+        n += 2
+        while k*k<=n and p do
+            p = floor(n/k)*k!=n
+            k += 2
+        end while
+        if p then
+            highest = n
+        end if
+    end while
+    return highest
+end function
+if primes(100000)!=99991 then crash("primes(100000)!=99991\n") end if
+if primes(10000)!=9973 then crash("primes(10000)!=9973\n") end if
+if primes(1000)!=997 then crash("primes(1000)!=997\n") end if
+if primes(100)!=101 then crash("primes(100)!=101\n") end if
+if primes(10)!=11 then crash("primes(10)!=11\n") end if
+if primes(9)!=7 then crash("primes(9)!=7\n") end if
+if primes(8)!=7 then crash("primes(8)!=7\n") end if
+if primes(7)!=7 then crash("primes(7)!=7\n") end if
+if primes(6)!=7 then crash("primes(6)!=7\n") end if
+if primes(5)!=5 then crash("primes(5)!=5\n") end if
+if primes(4)!=5 then crash("primes(4)!=5\n") end if
+if primes(3)!=3 then crash("primes(3)!=3\n") end if
+if primes(2)!=3 then crash("primes(2)!=3\n") end if
+if primes(1)!=0 then crash("primes(1)!=0\n") end if
+
