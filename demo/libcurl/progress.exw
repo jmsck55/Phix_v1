@@ -1,0 +1,99 @@
+--
+-- progress.exw
+--
+-- shows progress while downloading a file
+--
+-- Note: It's not a "pretty" display, it just scrolls down the screen.
+--       It's just an example!
+--
+-- Ray Smith 29/08/2002, reworked PL 1/1/18
+
+constant url = "http://example.com"
+
+include libcurl.e
+
+curl_global_init()
+
+atom curl = curl_easy_init()
+
+function curl_xferinfo_callback64(atom clientp, dltotal, dlnow, ultotal, ulnow)
+--
+-- On 64-bit, int64 are handled just as you might expect ...
+--
+ ?{dltotal,dlnow,ultotal,ulnow}
+
+    atom percentage = iff(dltotal=0?0:dlnow*100/dltotal)
+--  printf(1, "Current=%d kb  Total=%d kb (%d%%)\n  ", {dlnow/1024, dltotal/1024, percentage})
+    printf(1, "Current=%d   Total=%d  (%d%%)\n  ", {dlnow, dltotal, percentage})
+
+    return 0 -- signify success
+end function
+function curl_xferinfo_callback32(atom clientp, dltotal, dltotal_hi, dlnow, atom dlnow_hi,
+                                                ultotal, ultotal_hi, ulnow, atom ulnow_hi)
+--
+-- ... whereas on 32-bit, parameters dltotal..ulnow are passed as int64, but call_back() grabs
+--      32 bits at a time off the system stack, so we (may) need to stitch them back together.
+--
+    if dltotal_hi!=0 then dltotal += dltotal_hi*#100000000 end if
+    if   dlnow_hi!=0 then   dlnow +=   dlnow_hi*#100000000 end if
+    if ultotal_hi!=0 then ultotal += ultotal_hi*#100000000 end if
+    if   ulnow_hi!=0 then   ulnow +=   ulnow_hi*#100000000 end if
+
+    return curl_xferinfo_callback64(clientp, dltotal, dlnow, ultotal, ulnow)
+end function
+
+constant r_xferinfo64 = routine_id("curl_xferinfo_callback64"),
+         r_xferinfo32 = routine_id("curl_xferinfo_callback32"),
+         xferinfo_cb = call_back({'+', iff(machine_bits()=64?r_xferinfo64:r_xferinfo32)})
+
+printf(1, "Downloading remote file %s\n", {url})
+
+atom pErrorBuffer = allocate(CURL_ERROR_SIZE)
+curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, pErrorBuffer)
+curl_easy_setopt(curl, CURLOPT_URL, url)
+-- set progress callback
+curl_easy_setopt(curl, CURLOPT_NOPROGRESS,false)
+curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, xferinfo_cb)
+
+--curl_easy_setopt(curl, CURLOPT_FAILONERROR, true)
+--curl_easy_setopt(curl, CURLOPT_VERBOSE, true)
+
+object ret = curl_easy_perform_ex(curl)
+if atom(ret) then
+   printf(1, "Error %d(%s) downloading file\n", {ret,peek_string(pErrorBuffer)})
+else
+    ?{"bytes received",length(ret)}
+end if
+
+curl_easy_cleanup(curl)
+free(pErrorBuffer)
+
+puts(1, "Press any key to continue.\n")
+{} = wait_key()
+
+--/*
+--It works! (duplicate entries removed, shows 32 and 64 bit:)
+
+C:\Program Files (x86)\Phix>p demo\libcurl\progress.exw
+Downloading remote file http://example.com
+  {0,0,0,0}
+Current=0   Total=0  (0%)
+  {1270,971,0,0}
+Current=971   Total=1270  (76%)
+  {1270,1270,0,0}
+Current=1270   Total=1270  (100%)
+  {"bytes received",1270}
+Press any key to continue.
+
+C:\Program Files (x86)\Phix>p64 demo\libcurl\progress.exw
+Downloading remote file http://example.com
+  {0,0,0,0}
+Current=0   Total=0  (0%)
+  {1270,971,0,0}
+Current=971   Total=1270  (76%)
+  {1270,1270,0,0}
+Current=1270   Total=1270  (100%)
+  {"bytes received",1270}
+Press any key to continue.
+
+--*/
